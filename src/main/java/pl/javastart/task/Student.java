@@ -5,7 +5,6 @@ public class Student {
     private Group group;
     private String firstName;
     private String lastName;
-    private double grade;
 
     public Student(int index, Group group, String firstName, String lastName) {
         this.index = index;
@@ -14,13 +13,7 @@ public class Student {
         this.lastName = lastName;
     }
 
-    public double getGrade() {
-        return grade;
-    }
 
-    public void setGrade(double grade) {
-        this.grade = grade;
-    }
 
     public int getIndex() {
         return index;
