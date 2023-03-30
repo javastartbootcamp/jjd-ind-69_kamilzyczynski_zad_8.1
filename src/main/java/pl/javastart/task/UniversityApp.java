@@ -1,8 +1,10 @@
 package pl.javastart.task;
 
+import java.util.Arrays;
+
 public class UniversityApp {
-    private Lecturer[] lecturers = new Lecturer[100];
-    private Group[] groups = new Group[100];
+    private Lecturer[] lecturers = new Lecturer[10];
+    private Group[] groups = new Group[10];
     private int countLecturers = 0;
     private int countGroups = 0;
 
@@ -17,19 +19,34 @@ public class UniversityApp {
      * @param lastName  - nazwisko prowadzącego
      */
     public void createLecturer(int id, String degree, String firstName, String lastName) {
-        for (int i = 0; i < countLecturers; i++) {
-            if (lecturers[i].getId() == id) {
-                System.out.printf("Prowadzący z id %d już istnieje\n", id);
-                return;
-            }
+        Lecturer lecturer = checkLecturerExists(id);
+        if (lecturer != null) {
+            System.out.printf("Prowadzący z id %d już istnieje\n", id);
+            return;
         }
-        Lecturer lecturer = new Lecturer(id, degree, firstName, lastName);
+        lecturer = new Lecturer(id, degree, firstName, lastName);
+        checkLecturersCapacity();
         lecturers[countLecturers] = lecturer;
         countLecturers++;
         System.out.printf("Dodano prowadzącego: %s %s\n", lecturer.getFirstName(), lecturer.getLastName());
     }
 
-        /**
+    private Lecturer checkLecturerExists(int id) {
+        for (int i = 0; i < countLecturers; i++) {
+            if (lecturers[i].getId() == id) {
+                return lecturers[i];
+            }
+        }
+        return null;
+    }
+
+    private void checkLecturersCapacity() {
+        if (countLecturers == lecturers.length) {
+            lecturers = Arrays.copyOf(lecturers, lecturers.length * 2);
+        }
+    }
+
+    /**
          * Tworzy grupę zajęciową.
          * W przypadku gdy grupa z zadanym kodem już istnieje, wyświetla się komunikat:
          * "Grupa [kod grupy] już istnieje"
@@ -41,32 +58,39 @@ public class UniversityApp {
          * @param lecturerId - identyfikator prowadzącego. Musi zostać wcześniej utworzony za pomocą metody {@link #createLecturer(int, String, String, String)}
          */
     public void createGroup(String code, String name, int lecturerId) {
-        boolean lecturerExists = false;
-        Lecturer lecturer = null;
-        for (int i = 0; i < countLecturers; i++) {
-            if (lecturers[i].getId() == lecturerId) {
-                lecturer = lecturers[i];
-                lecturerExists = true;
-                break;
-            }
-        }
-        if (!lecturerExists) {
+        Lecturer lecturer = checkLecturerExists(lecturerId);
+        if (lecturer == null) {
             System.out.printf("Prowadzący o id %d nie istnieje\n", lecturerId);
+            return;
         }
 
-        for (int i = 0; i < countGroups; i++) {
-            if (groups[i].getCode().equals(code)) {
-                System.out.printf("Grupa %s już istnieje\n", code);
-                return;
-            }
+        if (checkGroupExists(code) != null) {
+            System.out.printf("Grupa %s już istnieje\n", code);
+            return;
         }
         Group group = new Group(code, name, lecturer);
+        checkGroupsCapacity();
         groups[countGroups] = group;
         countGroups++;
         System.out.printf("Dodano grupę: %s\n", group.getName());
     }
 
-        /**
+    private void checkGroupsCapacity() {
+        if (countGroups == groups.length) {
+            groups = Arrays.copyOf(groups, groups.length * 2);
+        }
+    }
+
+    private Group checkGroupExists(String code) {
+        for (int i = 0; i < countGroups; i++) {
+            if (groups[i].getCode().equals(code)) {
+                return groups[i];
+            }
+        }
+        return null;
+    }
+
+    /**
          * Dodaje studenta do grupy zajęciowej.
          * W przypadku gdy grupa zajęciowa nie istnieje wyświetlany jest komunikat:
          * "Grupa [kod grupy] nie istnieje
@@ -77,28 +101,23 @@ public class UniversityApp {
          * @param lastName  - nazwisko studenta
          */
     public void addStudentToGroup(int index, String groupCode, String firstName, String lastName) {
-        boolean groupExists = false;
-        Group group = null;
-        for (int i = 0; i < countGroups; i++) {
-            if (groups[i].getCode().equals(groupCode)) {
-                group = groups[i];
-                groupExists = true;
-                break;
-            }
-        }
-        if (!groupExists) {
+        Group group = checkGroupExists(groupCode);
+        if (group == null) {
             System.out.printf("Grupa %s nie istnieje", groupCode);
             return;
         }
-        for (int i = 0; i < group.getStudentCount(); i++) {
-            if (group.students[i].getIndex() == index) {
-                System.out.printf("Student %s %s został już wcześniej dodany do grupy: %s\n",
-                        firstName, lastName, group.getName());
-                return;
-            }
+
+        Student student = checkStudentExists(index, group);
+        if (student != null) {
+            System.out.printf("Student o indeksie %d jest już w grupie %s\n",
+                    index, groupCode);
+            return;
         }
-        Student student = new Student(index, group, firstName, lastName);
-        group.students[group.getStudentCount()] = student;
+        student = new Student(index, group, firstName, lastName);
+        if (group.getStudentCount() == group.getStudents().length) {
+            group.setStudents(Arrays.copyOf(group.getStudents(), group.getStudents().length * 2));
+        }
+        group.getStudents()[group.getStudentCount()] = student;
         group.incrementStudentCount();
         System.out.printf("Dodano studenta: %s %s do grupy: %s\n", firstName, lastName, group.getName());
     }
@@ -118,17 +137,9 @@ public class UniversityApp {
          * @param groupCode - kod grupy, dla której wyświetlić informacje
          */
     public void printGroupInfo(String groupCode) {
-        boolean groupExists = false;
-        Group group = null;
-        for (int i = 0; i < countGroups; i++) {
-            if (groups[i].getCode().equals(groupCode)) {
-                group = groups[i];
-                groupExists = true;
-                break;
-            }
-        }
-        if (!groupExists) {
-            System.out.printf("Grupa %s nie znaleziona\n", groupCode);
+        Group group = checkGroupExists(groupCode);
+        if (group == null) {
+            System.out.printf("Grupa %s nie istnieje", groupCode);
             return;
         }
         System.out.printf("Kod: %s\n", group.getCode());
@@ -137,8 +148,8 @@ public class UniversityApp {
                 group.getLecturer().getFirstName(), group.getLecturer().getLastName());
         System.out.println("Uczestnicy:");
         for (int i = 0; i < group.getStudentCount(); i++) {
-            System.out.printf("%s %s %s\n", group.students[i].getIndex(), group.students[i].getFirstName(),
-                    group.students[i].getLastName());
+            System.out.printf("%s %s %s\n", group.getStudents()[i].getIndex(), group.getStudents()[i].getFirstName(),
+                    group.getStudents()[i].getLastName());
         }
     }
 
@@ -157,30 +168,14 @@ public class UniversityApp {
          * @param grade        - ocena
          */
     public void addGrade(int studentIndex, String groupCode, double grade) {
-        boolean groupExists = false;
-        Group group = null;
-        for (int i = 0; i < countGroups; i++) {
-            if (groups[i].getCode().equals(groupCode)) {
-                group = groups[i];
-                groupExists = true;
-                break;
-            }
-        }
-        if (!groupExists) {
-            System.out.printf("Grupa %s nie istnieje\n", groupCode);
+        Group group = checkGroupExists(groupCode);
+        if (group == null) {
+            System.out.printf("Grupa %s nie istnieje", groupCode);
             return;
         }
 
-        boolean studentExists = false;
-        Student student = null;
-        for (int i = 0; i < group.getStudentCount(); i++) {
-            if (group.students[i].getIndex() == studentIndex) {
-                studentExists = true;
-                student = group.students[i];
-                break;
-            }
-        }
-        if (!studentExists) {
+        Student student = checkStudentExists(studentIndex, group);
+        if (student == null) {
             System.out.printf("Student o indeksie %d nie jest zapisany do grupy %s", studentIndex, groupCode);
             return;
         }
@@ -190,13 +185,21 @@ public class UniversityApp {
                     groupCode);
             return;
         }
-
         student.setGrade(grade);
         System.out.printf("Dodano ocenę %.1f dla studenta o indeksie %d w grupie %s\n", grade, studentIndex,
                 groupCode);
     }
 
-        /**
+    private Student checkStudentExists(int studentIndex, Group group) {
+        for (int i = 0; i < group.getStudentCount(); i++) {
+            if (group.getStudents()[i].getIndex() == studentIndex) {
+                return group.getStudents()[i];
+            }
+        }
+        return null;
+    }
+
+    /**
          * Wyświetla wszystkie oceny studenta.
          * Przykładowy wydruk:
          * Podstawy programowania: 5.0
@@ -207,8 +210,8 @@ public class UniversityApp {
     public void printGradesForStudent(int index) {
         for (int i = 0; i < countGroups; i++) {
             for (int j = 0; j < groups[i].getStudentCount(); j++) {
-                if (groups[i].students[j].getIndex() == index) {
-                    System.out.printf("%s: %.1f\n", groups[i].getName(), groups[i].students[j].getGrade());
+                if (groups[i].getStudents()[j].getIndex() == index) {
+                    System.out.printf("%s: %.1f\n", groups[i].getName(), groups[i].getStudents()[j].getGrade());
                 }
             }
         }
@@ -224,19 +227,12 @@ public class UniversityApp {
          * @param groupCode - kod grupy, dla której wyświetlić oceny
          */
     public void printGradesForGroup(String groupCode) {
-        boolean groupExists = false;
-        Group group = null;
-        for (int i = 0; i < countGroups; i++) {
-            if (groups[i].getCode().equals(groupCode)) {
-                group = groups[i];
-                groupExists = true;
-                break;
-            }
-        }
-        if (groupExists) {
+        Group group = checkGroupExists(groupCode);
+        if (group != null) {
             for (int i = 0; i < group.getStudentCount(); i++) {
-                System.out.printf("%d %s %s: %.1f\n", group.students[i].getIndex(), group.students[i].getFirstName(),
-                        group.students[i].getLastName(), group.students[i].getGrade());
+                System.out.printf("%d %s %s: %.1f\n", group.getStudents()[i].getIndex(),
+                        group.getStudents()[i].getFirstName(), group.getStudents()[i].getLastName(),
+                        group.getStudents()[i].getGrade());
             }
         } else {
             System.out.printf("Grupa %s nie istnieje\n", groupCode);
@@ -258,16 +254,16 @@ public class UniversityApp {
             for (int j = 0; j < groups[i].getStudentCount(); j++) {
                 boolean indexExists = false;
                 for (int k = 0; k < indexCount; k++) {
-                    if (indexes[k] == groups[i].students[j].getIndex()) {
+                    if (indexes[k] == groups[i].getStudents()[j].getIndex()) {
                         indexExists = true;
                         break;
                     }
                 }
                 if (!indexExists) {
-                    indexes[indexCount] = groups[i].students[j].getIndex();
+                    indexes[indexCount] = groups[i].getStudents()[j].getIndex();
                     indexCount++;
-                    System.out.printf("%d %s %s\n", groups[i].students[j].getIndex(),
-                            groups[i].students[j].getFirstName(), groups[i].students[j].getLastName());
+                    System.out.printf("%d %s %s\n", groups[i].getStudents()[j].getIndex(),
+                            groups[i].getStudents()[j].getFirstName(), groups[i].getStudents()[j].getLastName());
                 }
             }
         }
