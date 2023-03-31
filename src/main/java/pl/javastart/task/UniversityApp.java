@@ -106,7 +106,7 @@ public class UniversityApp {
     public void addStudentToGroup(int index, String groupCode, String firstName, String lastName) {
         Group group = checkGroupExists(groupCode);
         if (group == null) {
-            System.out.printf("Grupa %s nie znaleziona\n", groupCode);
+            System.out.printf("Grupa %s nie istnieje\n", groupCode);
             return;
         }
 
@@ -137,7 +137,7 @@ public class UniversityApp {
     public void printGroupInfo(String groupCode) {
         Group group = checkGroupExists(groupCode);
         if (group == null) {
-            System.out.printf("Grupa %s nie istnieje", groupCode);
+            System.out.printf("Grupa %s nie znaleziona", groupCode);
             return;
         }
         System.out.printf("Kod: %s\n", group.getCode());
