@@ -22,7 +22,7 @@ public class UniversityApp {
      * @param lastName  - nazwisko prowadzącego
      */
     public void createLecturer(int id, String degree, String firstName, String lastName) {
-        Lecturer lecturer = checkLecturerExists(id);
+        Lecturer lecturer = findLecturerExists(id);
         if (lecturer != null) {
             System.out.printf("Prowadzący z id %d już istnieje\n", id);
             return;
@@ -34,7 +34,7 @@ public class UniversityApp {
         System.out.printf("Dodano prowadzącego: %s %s\n", lecturer.getFirstName(), lecturer.getLastName());
     }
 
-    private Lecturer checkLecturerExists(int id) {
+    private Lecturer findLecturerExists(int id) {
         for (int i = 0; i < countLecturers; i++) {
             if (lecturers[i].getId() == id) {
                 return lecturers[i];
@@ -61,7 +61,7 @@ public class UniversityApp {
          * @param lecturerId - identyfikator prowadzącego. Musi zostać wcześniej utworzony za pomocą metody {@link #createLecturer(int, String, String, String)}
          */
     public void createGroup(String code, String name, int lecturerId) {
-        Lecturer lecturer = checkLecturerExists(lecturerId);
+        Lecturer lecturer = findLecturerExists(lecturerId);
         if (lecturer == null) {
             System.out.printf("Prowadzący o id %d nie istnieje\n", lecturerId);
             return;
@@ -106,26 +106,21 @@ public class UniversityApp {
     public void addStudentToGroup(int index, String groupCode, String firstName, String lastName) {
         Group group = checkGroupExists(groupCode);
         if (group == null) {
-            System.out.printf("Grupa %s nie istnieje", groupCode);
+            System.out.printf("Grupa %s nie znaleziona\n", groupCode);
             return;
         }
 
-        Student student = checkStudentExists(index, group);
+        Student student = group.findStudent(index, group);
         if (student != null) {
             System.out.printf("Student o indeksie %d jest już w grupie %s\n",
                     index, groupCode);
             return;
         }
         student = new Student(index, group, firstName, lastName);
-        if (group.getStudentCount() == group.getStudents().length) {
-            group.setStudents(Arrays.copyOf(group.getStudents(), group.getStudents().length * 2));
-        }
-        group.getStudents()[group.getStudentCount()] = student;
-        group.incrementStudentCount();
-        System.out.printf("Dodano studenta: %s %s do grupy: %s\n", firstName, lastName, group.getName());
+        group.addStudent(student);
     }
 
-        /**
+    /**
          * Wyświetla informacje o grupie w zadanym formacie.
          * Oczekiwany format:
          * Kod: [kod_grupy]
@@ -177,14 +172,13 @@ public class UniversityApp {
             return;
         }
 
-        Student student = checkStudentExists(studentIndex, group);
+        Student student = group.findStudent(studentIndex, group);
         if (student == null) {
             System.out.printf("Student o indeksie %d nie jest zapisany do grupy %s", studentIndex, groupCode);
             return;
         }
 
         Grade grade1 = new Grade(student, group, grade);
-        checkGradeExists(group, student);
 
         if (checkGradeExists(group, student)) {
             System.out.printf("Student o indeksie %d ma już wystawioną ocenę dla grupy %s\n", studentIndex,
@@ -211,15 +205,6 @@ public class UniversityApp {
             }
         }
         return false;
-    }
-
-    private Student checkStudentExists(int studentIndex, Group group) {
-        for (int i = 0; i < group.getStudentCount(); i++) {
-            if (group.getStudents()[i].getIndex() == studentIndex) {
-                return group.getStudents()[i];
-            }
-        }
-        return null;
     }
 
     /**

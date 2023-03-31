@@ -13,8 +13,6 @@ public class Student {
         this.lastName = lastName;
     }
 
-
-
     public int getIndex() {
         return index;
     }

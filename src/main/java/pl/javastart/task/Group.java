@@ -1,5 +1,7 @@
 package pl.javastart.task;
 
+import java.util.Arrays;
+
 public class Group {
     private String code;
     private String name;
@@ -11,6 +13,25 @@ public class Group {
         this.code = code;
         this.name = name;
         this.lecturer = lecturer;
+    }
+
+    public Student findStudent(int studentIndex, Group group) {
+        for (int i = 0; i < group.getStudentCount(); i++) {
+            if (group.getStudents()[i].getIndex() == studentIndex) {
+                return group.getStudents()[i];
+            }
+        }
+        return null;
+    }
+
+    public void addStudent(Student student) {
+        if (getStudentCount() == getStudents().length) {
+            setStudents(Arrays.copyOf(getStudents(), getStudents().length * 2));
+        }
+        getStudents()[getStudentCount()] = student;
+        incrementStudentCount();
+        System.out.printf("Dodano studenta: %s %s do grupy: %s\n", student.getFirstName(), student.getLastName(),
+                getName());
     }
 
     public Student[] getStudents() {
